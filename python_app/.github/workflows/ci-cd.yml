@@ -1,0 +1,40 @@
+name: Python CI/CD
+
+on:
+  push:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t hello-python .
+
+      - name: Start application
+        run: docker compose up -d
+
+      - name: Wait for application
+        run: sleep 5
+
+      - name: Smoke test
+        run: |
+          response=$(curl -s http://localhost:8000)
+          echo "Response: $response"
+
+          if [ "$response" != "Hello World" ]; then
+            echo "Smoke test failed"
+            exit 1
+          fi
+
+      - name: Show application logs
+        if: always()
+        run: docker compose logs
+
+      - name: Stop application
+        if: always()
+        run: docker compose down
